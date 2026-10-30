@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lootjes trekken</title>
+<style>
+  :root {
+    --silver:#f1f2fa; --silver-soft:#e4e5f4; --accent:#ece6ff; --err:#ffd6e2;
+    --line:rgba(255,255,255,.34); --field:rgba(255,255,255,.16);
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center; padding:16px;
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif; color:var(--silver);
+    background:linear-gradient(160deg,#d6c8f6 0%,#c3aff0 50%,#b4c3f2 100%) fixed; }
+  .card { width:100%; max-width:460px; padding:28px; border-radius:22px; border:1px solid var(--line);
+    background:rgba(100,96,188,.9); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+    box-shadow:0 18px 50px rgba(70,60,160,.4); }
+  h1 { margin:0 0 8px; font-size:1.7rem; color:var(--silver); text-align:center; letter-spacing:.3px; }
+  h2 { margin:26px 0 8px; font-size:1.05rem; color:var(--silver); }
+  @supports ((-webkit-background-clip:text) or (background-clip:text)) {
+    h1, .lot { background:linear-gradient(180deg,#ffffff 0%,#b9bdd1 55%,#eef0f8 100%);
+      -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; color:transparent; }
+  }
+  p { color:var(--silver-soft); line-height:1.55; text-align:center; }
+  .gift { display:block; width:92px; height:86px; margin:0 auto 10px; filter:drop-shadow(0 6px 14px rgba(20,10,60,.4)); }
+  label { display:block; margin-top:14px; font-weight:600; color:var(--silver); }
+  input, textarea { width:100%; padding:12px 14px; margin:6px 0; border:1px solid var(--line); border-radius:12px;
+    font-size:1rem; background:var(--field); color:var(--silver); font-family:inherit; outline:none; }
+  input::placeholder, textarea::placeholder { color:#d3d1ee; }
+  input:focus, textarea:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(236,230,255,.28); }
+  textarea { resize:vertical; }
+  button { width:100%; padding:13px; margin-top:10px; border:0; border-radius:12px; font-size:1rem; font-weight:600;
+    cursor:pointer; color:#eceef8; background:linear-gradient(135deg,#4b3591,#35246f);
+    box-shadow:0 6px 16px rgba(30,15,80,.4); transition:filter .15s, transform .05s; }
+  button:hover { filter:brightness(1.08); }
+  button:active { transform:translateY(1px); }
+  button:disabled { opacity:.55; cursor:default; }
+  button.second { background:transparent; color:var(--silver); border:1px solid var(--line); box-shadow:none; }
+  button.danger { background:transparent; color:var(--err); border:1px solid var(--err); box-shadow:none; }
+  .error { color:var(--err); min-height:1.2em; margin:6px 0 0; font-size:.9rem; }
+  .lot { font-size:2.3rem; font-weight:800; text-align:center; padding:22px 0; word-break:break-word;
+    filter:drop-shadow(0 2px 14px rgba(236,230,255,.5)); }
+  .panel { border:1px solid rgba(255,255,255,.2); border-radius:14px; padding:6px 14px; background:linear-gradient(135deg,#4b3591,#35246f); }
+  .group { display:flex; justify-content:space-between; align-items:center; gap:10px; width:100%; margin:0; padding:12px 0;
+    background:none; color:var(--silver); border:0; border-bottom:1px solid var(--line); border-radius:0;
+    text-align:left; font-weight:500; box-shadow:none; }
+  .group:last-child { border-bottom:0; }
+  .group .count { color:#ddd2ff; font-weight:700; white-space:nowrap; font-size:.9rem; }
+  .empty { color:var(--silver-soft); padding:10px 0; font-size:.95rem; }
+  .big { font-size:1.25rem; font-weight:700; color:var(--accent); margin:4px 0 12px; text-align:center; }
+  .lot.small { font-size:1.9rem; padding:6px 0 12px; }
+  #lot-info { padding:12px 14px; margin:8px 0 4px; }
+  #s-people h2 { text-align:center; }
+  ul { list-style:none; padding:0; margin:12px 0 0; }
+  li { padding:10px 0; border-bottom:1px solid var(--line); }
+  li:last-child { border:0; }
+  .hidden { display:none; }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <linearGradient id="gBox" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5b3fa8"/><stop offset="1" stop-color="#3a2682"/></linearGradient>
+    <linearGradient id="gLid" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6e52c0"/><stop offset="1" stop-color="#4a35a0"/></linearGradient>
+    <linearGradient id="gSil" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#b4b8cf"/></linearGradient>
+    <symbol id="gift" viewBox="0 0 120 112">
+      <rect x="20" y="52" width="80" height="54" rx="7" fill="url(#gBox)"/>
+      <rect x="13" y="38" width="94" height="20" rx="6" fill="url(#gLid)"/>
+      <rect x="53" y="38" width="14" height="68" fill="url(#gSil)"/>
+      <path d="M60 38 C40 4 14 18 46 38 Z" fill="url(#gSil)"/>
+      <path d="M60 38 C80 4 106 18 74 38 Z" fill="url(#gSil)"/>
+      <circle cx="60" cy="38" r="7" fill="#d9dcee"/>
+    </symbol>
+  </defs>
+</svg>
+<div class="card">
+
+  <!-- 1. Start + al gemaakte groepen -->
+  <section id="s-start">
+    <svg class="gift" aria-hidden="true"><use href="#gift"/></svg>
+    <h1>Lootjes trekken</h1>
+    <p id="start-msg">Maak een groep, deel de link en laat iedereen een lot trekken.</p>
+    <button id="btn-create">Lotengroep maken</button>
+    <h2>Al gemaakte groepen</h2>
+    <div class="panel" id="my-groups"></div>
+  </section>
+
+  <!-- 2. Namen invoeren -->
+  <section id="s-names" class="hidden">
+    <h1>Nieuwe lotengroep</h1>
+    <input id="group-title" placeholder="Naam van de groep (bijv. Sinterklaas)" autocomplete="off">
+    <p>Schrijf alle namen op die meedoen (minimaal 3).</p>
+    <div id="name-inputs"></div>
+    <button class="second" id="btn-add">+ Naam toevoegen</button>
+    <p class="error" id="err-names"></p>
+    <button id="btn-save">Opslaan</button>
+    <button class="second" id="btn-cancel">Terug</button>
+  </section>
+
+  <!-- 3. Groep: link delen + aantal getrokken -->
+  <section id="s-share" class="hidden">
+    <h1 id="share-title">Groep</h1>
+    <div class="big" id="share-count">…</div>
+    <p>Stuur deze link naar alle deelnemers. Iedereen vult zijn eigen naam in en trekt een lot.</p>
+    <input id="share-link" readonly>
+    <button id="btn-copy">Link kopiëren</button>
+    <p class="error" id="err-share"></p>
+    <button class="second" id="btn-back">Terug naar alle groepen</button>
+    <button class="danger" id="btn-delete">Groep verwijderen</button>
+  </section>
+
+  <!-- 4. Naam invoeren -->
+  <section id="s-join" class="hidden">
+    <h1 id="join-title">Wie ben jij?</h1>
+    <p>Vul je naam in om je lot te trekken.</p>
+    <input id="my-name" placeholder="Jouw naam" autocomplete="off">
+    <p class="error" id="err-join"></p>
+    <button id="btn-go">Door</button>
+  </section>
+
+  <!-- 4b. Info over jezelf -->
+  <section id="s-info" class="hidden">
+    <h1>Vertel iets over jezelf</h1>
+    <p>Dit ziet degene die jou heeft getrokken, zodat die weet wat je leuk vindt.</p>
+    <label for="info-likes">Waar hou je van?</label>
+    <textarea id="info-likes" rows="2" placeholder="Bijv. koken, voetbal, boeken"></textarea>
+    <label for="info-wants">Wat vind je leuk om te krijgen?</label>
+    <textarea id="info-wants" rows="2" placeholder="Bijv. chocolade, een goed boek"></textarea>
+    <p class="error" id="err-info"></p>
+    <button id="btn-info">Opslaan en lot trekken</button>
+  </section>
+
+  <!-- 5. Lot -->
+  <section id="s-lot" class="hidden">
+    <svg class="gift" aria-hidden="true"><use href="#gift"/></svg>
+    <h1>Dit is jouw lot</h1>
+    <div class="lot" id="lot-name">…</div>
+    <p>Hou het geheim! 🤫</p>
+    <button id="btn-continue" class="hidden">Verder</button>
+  </section>
+
+  <!-- 6. Deelnemers -->
+  <section id="s-people" class="hidden">
+    <h1>Overzicht</h1>
+    <h2>Jouw lot</h2>
+    <div class="lot small" id="people-lot">…</div>
+    <div class="panel hidden" id="lot-info"></div>
+    <h2>Deelnemers</h2>
+    <div class="big" id="people-count"></div>
+    <ul id="people"></ul>
+  </section>
+
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script>
+  // ====== VUL HIER JE EIGEN FIREBASE-GEGEVENS IN ======
+  const firebaseConfig = {
+    apiKey: "AIzaSyDzImUsLNbmj6PpNBCrnrCu3ns_K8F6zUk",
+    authDomain: "lotenwebsite.firebaseapp.com",
+    databaseURL: "https://lotenwebsite-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "lotenwebsite",
+    appId: "1:716187432239:web:fefbac3acc8d19c41addda"
+  };
+  // =====================================================
+
+  const $ = id => document.getElementById(id);
+  const groupId = new URLSearchParams(location.search).get("g");
+  let db = null, group = null, offs = [];
+
+  const configured = !/JOUW/.test(firebaseConfig.apiKey + firebaseConfig.databaseURL);
+  let authReady = Promise.resolve(), currentGroup = null, meIdx = -1, lotTarget = -1, lotName = "";
+  if (configured) {
+    try {
+      firebase.initializeApp(firebaseConfig);
+      db = firebase.database();
+      // Anoniem inloggen: zo weet de database wie de eigenaar van een groep is
+      authReady = firebase.auth().signInAnonymously().catch(e => console.error(e));
+    } catch (e) { console.error(e); }
+  }
+
+  // ---------- Hulpfuncties ----------
+  function show(id) {
+    offs.forEach(f => { try { f(); } catch (e) {} });   // oude live-luisteraars stoppen
+    offs = [];
+    document.querySelectorAll("section").forEach(s => s.classList.add("hidden"));
+    $(id).classList.remove("hidden");
+  }
+  function listen(ref, cb) {
+    const handler = ref.on("value", cb);
+    offs.push(() => ref.off("value", handler));
+  }
+  const countTrue = v => v ? Object.values(v).filter(Boolean).length : 0;
+  function getMine() {
+    try { return JSON.parse(localStorage.getItem("mijn-groepen") || "[]"); } catch (e) { return []; }
+  }
+  function setMine(list) {
+    try { localStorage.setItem("mijn-groepen", JSON.stringify(list)); } catch (e) {}
+  }
+  function groupLink(id) {
+    return location.href.split("?")[0].split("#")[0] + "?g=" + id;
+  }
+
+  // ---------- Startscherm: al gemaakte groepen ----------
+  function showStart() {
+    show("s-start");
+    const box = $("my-groups");
+    box.innerHTML = "";
+    const mine = getMine();
+    if (!mine.length) {
+      const d = document.createElement("div");
+      d.className = "empty";
+      d.textContent = "Nog geen groepen gemaakt.";
+      box.appendChild(d);
+      return;
+    }
+    mine.slice().reverse().forEach(g => {
+      const btn = document.createElement("button");
+      btn.className = "group";
+      const name = document.createElement("span"); name.textContent = g.title;
+      const count = document.createElement("span"); count.className = "count";
+      count.textContent = "… van " + g.n;
+      btn.append(name, count);
+      btn.onclick = () => openGroup(g);
+      box.appendChild(btn);
+      if (db) listen(db.ref("groups/" + g.id + "/claims"), snap => {
+        count.textContent = countTrue(snap.val()) + " van " + g.n + " getrokken";
+      });
+      else count.textContent = g.n + " namen";
+    });
+  }
+
+  function openGroup(g) {
+    show("s-share");
+    currentGroup = g;
+    $("err-share").textContent = "";
+    $("share-title").textContent = g.title;
+    $("share-link").value = groupLink(g.id);
+    $("btn-copy").textContent = "Link kopiëren";
+    $("share-count").textContent = "…";
+    if (db) listen(db.ref("groups/" + g.id + "/claims"), snap => {
+      $("share-count").textContent = countTrue(snap.val()) + " van " + g.n + " lootjes getrokken";
+    });
+  }
+
+  // ---------- Groep maken ----------
+  function addNameInput() {
+    const input = document.createElement("input");
+    input.placeholder = "Naam";
+    input.autocomplete = "off";
+    $("name-inputs").appendChild(input);
+    return input;
+  }
+
+  $("btn-create").onclick = () => {
+    if (!db) {
+      $("start-msg").textContent = "Vul eerst je Firebase-gegevens in bovenin het script van index.html.";
+      return;
+    }
+    show("s-names");
+    $("group-title").value = "";
+    $("err-names").textContent = "";
+    $("name-inputs").innerHTML = "";
+    addNameInput(); addNameInput(); addNameInput();
+    $("btn-save").disabled = false;
+    $("btn-save").textContent = "Opslaan";
+  };
+  $("btn-add").onclick = () => addNameInput().focus();
+  $("btn-cancel").onclick = showStart;
+  $("btn-back").onclick = showStart;
+
+  // Eén willekeurige kring: A trekt B, B trekt C, ..., laatste trekt A.
+  // Zo trekt niemand zichzelf en wordt elke naam precies één keer getrokken.
+  function makeAssignments(n) {
+    const order = [...Array(n).keys()];
+    for (let i = n - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [order[i], order[j]] = [order[j], order[i]];
+    }
+    const assign = {};
+    order.forEach((person, k) => { assign[person] = order[(k + 1) % n]; });
+    if (Object.keys(assign).some(k => assign[k] === Number(k))) throw new Error("Iemand zou zichzelf trekken");
+    return assign;
+  }
+
+  $("btn-save").onclick = async () => {
+    const names = [...$("name-inputs").querySelectorAll("input")]
+      .map(i => i.value.trim()).filter(Boolean);
+    const title = $("group-title").value.trim() || "Lootjes";
+    if (names.length < 3) { $("err-names").textContent = "Vul minimaal 3 namen in."; return; }
+    if (new Set(names.map(n => n.toLowerCase())).size !== names.length) {
+      $("err-names").textContent = "Er staan twee dezelfde namen in de lijst."; return;
+    }
+    $("err-names").textContent = "";
+    $("btn-save").disabled = true;
+    $("btn-save").textContent = "Bezig met opslaan…";
+    try {
+      await authReady;
+      const user = firebase.auth().currentUser;
+      if (!user) throw new Error("Inloggen mislukt. Zet in Firebase bij Authentication de 'Anoniem'-aanmelding aan.");
+      const id = db.ref("groups").push().key;
+      await db.ref("groups/" + id).set({
+        owner: user.uid,
+        title: title,
+        names: names,
+        assign: makeAssignments(names.length),
+        created: firebase.database.ServerValue.TIMESTAMP
+      });
+      const g = { id: id, title: title, n: names.length };
+      setMine(getMine().concat(g));
+      openGroup(g);
+    } catch (e) {
+      $("err-names").textContent = "Opslaan mislukt: " + e.message;
+      $("btn-save").disabled = false;
+      $("btn-save").textContent = "Opslaan";
+    }
+  };
+
+  function removeFromList(id) {
+    setMine(getMine().filter(g => g.id !== id));
+    showStart();
+  }
+
+  $("btn-delete").onclick = async () => {
+    const g = currentGroup;
+    if (!g) return;
+    if (!confirm('Groep "' + g.title + '" verwijderen? De link werkt daarna voor niemand meer.')) return;
+    const btn = $("btn-delete");
+    const err = $("err-share");
+    btn.disabled = true;
+    err.textContent = "";
+    try {
+      await authReady;
+      const user = firebase.auth().currentUser;
+      if (!user) {
+        err.textContent = "Niet ingelogd bij Firebase. Zet bij Authentication → Sign-in method de 'Anoniem'-aanmelding aan en ververs de pagina.";
+        return;
+      }
+      const snap = await db.ref("groups/" + g.id).once("value");
+      const data = snap.val();
+      if (!data) { removeFromList(g.id); return; }          // bestaat al niet meer
+      if (data.owner && data.owner !== user.uid) {
+        err.textContent = "Deze groep is op een ander apparaat of in een andere browser gemaakt. Alleen daar kun je hem verwijderen.";
+        return;
+      }
+      try {
+        await db.ref("groups/" + g.id).remove();
+      } catch (e) {
+        err.textContent = "Firebase weigert het verwijderen. Heb je de nieuwe regels geplakt én op Publiceren geklikt? (" + e.message + ")";
+        if (confirm("Alleen uit je lijst halen?")) removeFromList(g.id);
+        return;
+      }
+      removeFromList(g.id);
+    } catch (e) {
+      err.textContent = "Er ging iets mis: " + e.message;
+    } finally {
+      btn.disabled = false;
+    }
+  };
+
+  $("btn-copy").onclick = async () => {
+    const input = $("share-link");
+    input.select();
+    try { await navigator.clipboard.writeText(input.value); }
+    catch (e) { try { document.execCommand("copy"); } catch (e2) {} }
+    $("btn-copy").textContent = "Gekopieerd ✓";
+  };
+
+  // ---------- Deelnemen via link ----------
+  async function initJoin() {
+    show("s-join");
+    if (!db) {
+      $("err-join").textContent = "De website is nog niet gekoppeld aan Firebase.";
+      $("btn-go").disabled = true;
+      return;
+    }
+    try {
+      const snap = await db.ref("groups/" + groupId).once("value");
+      group = snap.val();
+    } catch (e) {
+      $("err-join").textContent = "Kon de groep niet laden: " + e.message;
+      return;
+    }
+    if (!group) {
+      showStart();
+      $("start-msg").textContent = "Deze groep bestaat niet (meer). Maak een nieuwe aan.";
+      return;
+    }
+    $("join-title").textContent = group.title || "Wie ben jij?";
+    const claims = group.claims || {};
+    for (const k of Object.keys(claims)) {
+      if (claims[k] === deviceId) $("my-name").value = group.names[Number(k)];
+    }
+  }
+
+  // Elk apparaat krijgt een eigen ID. Een naam kan maar door één apparaat worden gekozen,
+  // en een apparaat kan maar één naam kiezen. Dat wordt in de database afgedwongen.
+  function getDeviceId() {
+    let id = null;
+    try { id = localStorage.getItem("apparaat-id"); } catch (e) {}
+    if (!id) {
+      id = (window.crypto && crypto.randomUUID) ? crypto.randomUUID()
+         : Date.now() + "-" + Math.random().toString(36).slice(2);
+      try { localStorage.setItem("apparaat-id", id); } catch (e) {}
+    }
+    return id;
+  }
+  const deviceId = getDeviceId();
+
+  function showLotInfo(target, name) {
+    const box = $("lot-info");
+    box.classList.remove("hidden");
+    listen(db.ref("groups/" + groupId + "/info/" + target), snap => {
+      const v = snap.val();
+      box.innerHTML = "";
+      const head = document.createElement("div");
+      head.style.fontWeight = "700";
+      head.textContent = "Over " + name;
+      box.appendChild(head);
+      if (!v) {
+        const w = document.createElement("div");
+        w.className = "empty";
+        w.textContent = name + " heeft nog niets ingevuld. Zodra dat gebeurt, zie je het hier vanzelf.";
+        box.appendChild(w);
+        return;
+      }
+      [["Houdt van:", v.likes], ["Vindt leuk om te krijgen:", v.wants]].forEach(([label, text]) => {
+        const d = document.createElement("div");
+        d.style.margin = "8px 0";
+        const b = document.createElement("strong");
+        b.textContent = label + " ";
+        d.append(b, document.createTextNode(text || ""));
+        box.appendChild(d);
+      });
+    });
+  }
+
+  function revealLot(me) {
+    const target = group.assign[me];
+    const result = group.names[target];
+    show("s-lot");
+    $("btn-continue").classList.add("hidden");
+    let ticks = 0;
+    const timer = setInterval(() => {
+      $("lot-name").textContent = group.names[Math.floor(Math.random() * group.names.length)];
+      if (++ticks >= 14) {
+        clearInterval(timer);
+        $("lot-name").textContent = result;
+        $("btn-continue").classList.remove("hidden");
+        lotTarget = target;
+        lotName = result;
+      }
+    }, 90);
+  }
+
+  async function startDraw() {
+    if (!group) return;
+    const btn = $("btn-go");
+    btn.disabled = true;
+    $("err-join").textContent = "";
+    try {
+      const snap = await db.ref("groups/" + groupId).once("value");
+      group = snap.val();
+      if (!group) throw new Error("Groep niet gevonden.");
+
+      // Heeft dit apparaat al een naam gekozen? Dan krijg je altijd datzelfde lot terug.
+      const claims = group.claims || {};
+      let me = -1;
+      for (const k of Object.keys(claims)) if (claims[k] === deviceId) me = Number(k);
+
+      if (me === -1) {
+        const typed = $("my-name").value.trim().toLowerCase();
+        me = group.names.findIndex(n => n.toLowerCase() === typed);
+        if (me === -1) { $("err-join").textContent = "Deze naam staat niet in de groep. Check de spelling."; return; }
+        // Naam vastleggen: lukt maar voor één apparaat (veilig bij tegelijk klikken)
+        const res = await db.ref("groups/" + groupId + "/claims/" + me)
+          .transaction(cur => (cur === null ? deviceId : undefined));
+        if (res.snapshot.val() !== deviceId) {
+          $("err-join").textContent = "Deze naam is al gekozen op een ander apparaat. Kies je eigen naam.";
+          return;
+        }
+      }
+
+      $("my-name").value = group.names[me];
+      meIdx = me;
+      if (group.assign[me] === me) {
+        $("err-join").textContent = "Deze groep klopt niet (je zou jezelf trekken). Maak een nieuwe groep.";
+        return;
+      }
+      const myInfo = group.info && group.info[me];
+      if (!myInfo) {
+        $("info-likes").value = "";
+        $("info-wants").value = "";
+        $("err-info").textContent = "";
+        $("btn-info").disabled = false;
+        show("s-info");
+        return;
+      }
+      revealLot(me);
+    } catch (e) {
+      $("err-join").textContent = "Er ging iets mis: " + e.message;
+    } finally {
+      btn.disabled = false;
+    }
+  }
+  $("btn-info").onclick = async () => {
+    const likes = $("info-likes").value.trim();
+    const wants = $("info-wants").value.trim();
+    const err = $("err-info");
+    if (!likes || !wants) { err.textContent = "Vul beide vragen in."; return; }
+    err.textContent = "";
+    $("btn-info").disabled = true;
+    try {
+      await db.ref("groups/" + groupId + "/info/" + meIdx).set({ likes: likes, wants: wants });
+      group = (await db.ref("groups/" + groupId).once("value")).val();
+      revealLot(meIdx);
+    } catch (e) {
+      err.textContent = "Opslaan mislukt: " + e.message + " (Staan de nieuwe regels met 'info' in Firebase en heb je op Publiceren geklikt?)";
+    } finally {
+      $("btn-info").disabled = false;
+    }
+  };
+  $("btn-go").onclick = startDraw;
+  $("my-name").addEventListener("keydown", e => { if (e.key === "Enter") startDraw(); });
+
+  $("btn-continue").onclick = () => {
+    show("s-people");
+    $("people-lot").textContent = lotName;
+    showLotInfo(lotTarget, lotName);
+    listen(db.ref("groups/" + groupId), snap => {
+      const g = snap.val(); if (!g) return;
+      $("people-count").textContent = countTrue(g.claims) + " van " + g.names.length + " lootjes getrokken";
+      const list = $("people");
+      list.innerHTML = "";
+      g.names.forEach(name => {
+        const li = document.createElement("li");
+        li.textContent = name;
+        list.appendChild(li);
+      });
+    });
+  };
+
+  // ---------- Start ----------
+  if (groupId) initJoin(); else showStart();
+</script>
+</body>
+</html>
